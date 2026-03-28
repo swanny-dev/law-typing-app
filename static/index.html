@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lex — Law Typing Practice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <!-- ── Exercise screen ── -->
+  <div id="exercise-screen" class="screen active">
+
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-name">lex</span>
+        <span class="brand-tag">law typing</span>
+      </div>
+      <div class="header-nav">
+        <button class="btn-ghost" onclick="showHeatmap()">heatmap</button>
+        <button class="btn-ghost" onclick="showProgress()">progress</button>
+      </div>
+    </header>
+
+    <div class="options-bar">
+      <div class="options-left">
+        <div class="toggle-group">
+          <button id="btn-pub"    class="toggle-btn active" onclick="setSubject('pub')">Pub Law</button>
+          <button id="btn-crim"   class="toggle-btn"        onclick="setSubject('crim')">Crim Law</button>
+          <button id="btn-all"    class="toggle-btn"        onclick="setSubject('all')">Both</button>
+          <button id="btn-cases"  class="toggle-btn"        onclick="setSubject('cases')">Cases</button>
+          <button id="btn-custom" class="toggle-btn"        onclick="setSubject('custom')">Custom</button>
+        </div>
+        <div class="toggle-group">
+          <button id="btn-passage" class="toggle-btn active" onclick="setStyle('passage')">Passage</button>
+          <button id="btn-essay"   class="toggle-btn"        onclick="setStyle('essay')">Essay</button>
+        </div>
+        <div class="toggle-group">
+          <button id="btn-lower" class="toggle-btn"        onclick="setCase('lower')">aa</button>
+          <button id="btn-mixed" class="toggle-btn active" onclick="setCase('mixed')">Aa</button>
+        </div>
+        <div class="toggle-group">
+          <button id="btn-short" class="toggle-btn"        onclick="setLength('short')">Short</button>
+          <button id="btn-long"  class="toggle-btn active" onclick="setLength('long')">Long</button>
+        </div>
+        <div class="toggle-group">
+          <span class="toggle-label">goal</span>
+          <button id="btn-tgt-off" class="toggle-btn active" onclick="setTargetWpm(0)">—</button>
+          <button id="btn-tgt-40"  class="toggle-btn"        onclick="setTargetWpm(40)">40</button>
+          <button id="btn-tgt-60"  class="toggle-btn"        onclick="setTargetWpm(60)">60</button>
+          <button id="btn-tgt-80"  class="toggle-btn"        onclick="setTargetWpm(80)">80</button>
+        </div>
+      </div>
+      <div id="live-stats" class="live-stats" style="visibility:hidden">
+        <div id="live-accuracy" class="live-stat">—<span>acc</span></div>
+        <div id="live-wpm"      class="live-stat">—<span>wpm</span></div>
+        <div id="live-timer"    class="live-stat">0<span>s</span></div>
+      </div>
+    </div>
+
+    <p id="topic-label" class="topic-label"></p>
+
+    <div id="exercise-area" class="exercise-area" onclick="focusInput()">
+      <div id="text-display"></div>
+      <span id="click-hint" class="click-hint">click to begin</span>
+      <textarea
+        id="hidden-input"
+        autocomplete="off" autocorrect="off"
+        autocapitalize="off" spellcheck="false"
+      ></textarea>
+    </div>
+
+    <div class="controls">
+      <button class="btn-action" onclick="loadNewExercise()">new exercise</button>
+      <button id="restart-btn" class="btn-ghost-sm" onclick="restartExercise()" style="display:none">restart</button>
+    </div>
+
+  </div>
+
+  <!-- ── Results screen ── -->
+  <div id="results-screen" class="screen">
+    <div class="results-wrap">
+      <p class="results-eyebrow">complete</p>
+      <div class="results-wpm" id="res-wpm">—</div>
+      <p class="results-wpm-label">words per minute</p>
+      <div id="res-bests" class="results-bests"></div>
+      <div class="results-row">
+        <div class="results-stat">
+          <span id="res-accuracy" class="results-stat-val">—</span>
+          <span class="results-stat-key">accuracy</span>
+        </div>
+        <div class="results-divider"></div>
+        <div class="results-stat">
+          <span id="res-mistakes" class="results-stat-val">—</span>
+          <span class="results-stat-key">mistakes</span>
+        </div>
+        <div class="results-divider"></div>
+        <div class="results-stat">
+          <span id="res-time" class="results-stat-val">—</span>
+          <span class="results-stat-key">time</span>
+        </div>
+      </div>
+      <p id="res-topic" class="results-topic"></p>
+      <div class="results-actions">
+        <button class="btn-action" onclick="restartExercise()">try again</button>
+        <button class="btn-ghost-sm" onclick="loadNewExercise()">new exercise</button>
+        <button class="btn-ghost-sm" onclick="showProgress()">progress</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Progress screen ── -->
+  <div id="progress-screen" class="screen">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-name">lex</span>
+        <span class="brand-tag">progress</span>
+      </div>
+      <button class="btn-ghost" onclick="showExercise()">← back</button>
+    </header>
+    <div id="progress-content"></div>
+  </div>
+
+  <!-- ── Heatmap screen ── -->
+  <div id="heatmap-screen" class="screen">
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-name">lex</span>
+        <span class="brand-tag">heatmap</span>
+      </div>
+      <button class="btn-ghost" onclick="showExercise()">← back</button>
+    </header>
+    <p class="heatmap-subtitle">characters you make the most mistakes on, across all sessions</p>
+    <div id="heatmap-content"></div>
+  </div>
+
+  <!-- ── Custom text modal ── -->
+  <div id="custom-modal" class="modal-overlay" style="display:none">
+    <div class="modal-box">
+      <p class="modal-title">custom exercise</p>
+      <p class="modal-subtitle">paste your own text — lecture notes, case summaries, essay plans</p>
+      <textarea
+        id="custom-textarea"
+        class="modal-textarea"
+        placeholder="paste text here..."
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+      ></textarea>
+      <div class="modal-actions">
+        <button class="btn-action" onclick="submitCustomText()">use this text</button>
+        <button class="btn-ghost-sm" onclick="hideCustomModal()">cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
