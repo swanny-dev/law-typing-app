@@ -114,7 +114,7 @@
   <div id="progress-screen" class="screen">
     <header class="app-header">
       <div class="brand">
-        <span class="brand-name">lex</span>
+        <img src="/static/avo1small.png" alt="Targeted Typing Test" class="brand-logo" id="logo-progress">
       </div>
       <button class="btn-ghost" onclick="showExercise()">← back</button>
     </header>
@@ -125,7 +125,7 @@
   <div id="heatmap-screen" class="screen">
     <header class="app-header">
       <div class="brand">
-        <span class="brand-name">lex</span>
+        <img src="/static/avo1small.png" alt="Targeted Typing Test" class="brand-logo" id="logo-heatmap">
       </div>
       <button class="btn-ghost" onclick="showExercise()">← back</button>
     </header>
@@ -154,8 +154,10 @@
   <script src="/static/script.js"></script>
   <script>
     const logos = ["/static/avo1small.png", "/static/avo2small.png"];
-    const logoEl = document.getElementById("app-logo");
-    logoEl.src = logos[Math.floor(Math.random() * logos.length)];
+    const chosen = logos[Math.floor(Math.random() * logos.length)];
+    document.getElementById("app-logo").src      = chosen;
+    document.getElementById("logo-progress").src = chosen;
+    document.getElementById("logo-heatmap").src  = chosen;
   </script>
 </body>
 </html>
