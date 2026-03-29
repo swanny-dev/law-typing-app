@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from claude_service import generate_exercise, docs_available
-from database import get_bests, get_key_errors, get_sessions, init_db, save_key_errors, save_session
+from database import delete_session, get_bests, get_key_errors, get_sessions, init_db, save_key_errors, save_session
 
 security = HTTPBasic(auto_error=False)
 
@@ -88,6 +88,12 @@ async def post_progress(result: SessionResult, auth=Depends(check_auth)):
 @app.get("/api/progress")
 async def get_progress(auth=Depends(check_auth)):
     return get_sessions()
+
+
+@app.delete("/api/progress/{session_id}")
+async def delete_progress(session_id: int, auth=Depends(check_auth)):
+    delete_session(session_id)
+    return {"status": "ok"}
 
 
 @app.get("/api/heatmap")

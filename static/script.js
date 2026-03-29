@@ -3,7 +3,7 @@
 let rawPassage       = "";
 let currentPassage   = "";
 let currentTopic     = "";
-let currentLength    = "long";
+let currentLength    = "short";
 let currentCase      = "mixed";
 let currentSubject   = "pub";
 let currentStyle     = "passage";
@@ -377,21 +377,30 @@ async function showProgress() {
 
     content.innerHTML = `
       <table class="progress-table">
-        <thead><tr><th>date</th><th>wpm</th><th>accuracy</th><th>mistakes</th><th>topic</th></tr></thead>
+        <thead><tr><th>date</th><th>wpm</th><th>accuracy</th><th>mistakes</th><th>topic</th><th></th></tr></thead>
         <tbody>
           ${data.map(r => `
-            <tr>
+            <tr data-id="${r.id}">
               <td>${r.date}</td>
               <td class="wpm-cell"><span>${r.wpm}</span></td>
               <td class="acc-cell">${r.accuracy}%</td>
               <td class="mistakes-cell">${r.mistakes}</td>
               <td>${r.topic}</td>
+              <td class="delete-cell"><button class="delete-row-btn" onclick="deleteSession(${r.id})">×</button></td>
             </tr>`).join("")}
         </tbody>
       </table>`;
   } catch {
     content.innerHTML = "<p class='no-results'>failed to load progress</p>";
   }
+}
+
+async function deleteSession(id) {
+  try {
+    await fetch(`/api/progress/${id}`, { method: "DELETE" });
+    const row = document.querySelector(`tr[data-id="${id}"]`);
+    if (row) row.remove();
+  } catch {}
 }
 
 // ── Heatmap ────────────────────────────────────────────────────

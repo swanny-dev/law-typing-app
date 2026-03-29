@@ -54,10 +54,17 @@ def save_key_errors(errors: dict):
 def get_sessions() -> list:
     conn = sqlite3.connect(DB_PATH)
     rows = conn.execute(
-        "SELECT date, wpm, accuracy, topic, mistakes FROM sessions ORDER BY id DESC LIMIT 30"
+        "SELECT id, date, wpm, accuracy, topic, mistakes FROM sessions ORDER BY id DESC LIMIT 30"
     ).fetchall()
     conn.close()
-    return [{"date": r[0], "wpm": r[1], "accuracy": r[2], "topic": r[3], "mistakes": r[4]} for r in rows]
+    return [{"id": r[0], "date": r[1], "wpm": r[2], "accuracy": r[3], "topic": r[4], "mistakes": r[5]} for r in rows]
+
+
+def delete_session(session_id: int):
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+    conn.commit()
+    conn.close()
 
 
 def get_key_errors() -> dict:
