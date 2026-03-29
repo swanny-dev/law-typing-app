@@ -3,6 +3,7 @@ import random
 import anthropic
 from dotenv import load_dotenv
 from content import PUBLIC_LAW_TOPICS, CRIMINAL_LAW_TOPICS, ALL_TOPICS, CASES
+from docs import random_chunk, docs_available
 
 load_dotenv()
 
@@ -39,12 +40,15 @@ async def generate_exercise(
     if subject == "cases":
         return await _generate_case_exercise(word_count, style)
 
+    if subject == "docs":
+        return await _generate_doc_exercise(word_count, style)
+
     topics     = SUBJECT_MAP.get(subject, ALL_TOPICS)
     topic      = random.choice(topics)
     style_note = STYLE_INSTRUCTIONS.get(style, STYLE_INSTRUCTIONS["passage"])
 
     response = await client.messages.create(
-        model="claude-opus-4-6",
+        model="claude-sonnet-4-6",
         max_tokens=300,
         messages=[{
             "role": "user",
@@ -81,7 +85,7 @@ async def _generate_case_exercise(word_count: str, style: str) -> dict:
         )
 
     response = await client.messages.create(
-        model="claude-opus-4-6",
+        model="claude-sonnet-4-6",
         max_tokens=300,
         messages=[{
             "role": "user",
@@ -101,3 +105,39 @@ async def _generate_case_exercise(word_count: str, style: str) -> dict:
 
     text = response.content[0].text.strip().strip("\"'")
     return {"text": text, "topic": case["name"]}
+
+
+async def _generate_doc_exercise(word_count: str, style: str) -> dict:
+    doc = random_chunk()
+    if not doc:
+        # fallback — should not happen if the UI only shows the button when docs exist
+        return await generate_exercise(word_count, "all", style)
+
+    style_note = STYLE_INSTRUCTIONS.get(style, STYLE_INSTRUCTIONS["passage"])
+
+    response = await client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=300,
+        messages=[{
+            "role": "user",
+            "content": (
+                f"You are helping a law student practise typing using content from their lecture notes.\n\n"
+                f"Here is an excerpt from their notes on '{doc['label']}':\n\n"
+                f"{doc['chunk']}\n\n"
+                f"Using the concepts, terminology, and any cases or statutes mentioned above, "
+                f"write a typing exercise for a law student.\n\n"
+                f"{style_note}\n\n"
+                "Additional requirements:\n"
+                f"- Exactly one paragraph, {word_count} words\n"
+                "- Reflect the specific content of the excerpt — do not invent unrelated law\n"
+                "- Do not use bullet points, headings, or numbered lists\n"
+                "- Return only the paragraph text. No introduction, no title, no quotation marks."
+            ),
+        }],
+    )
+
+    text = response.content[0].text.strip().strip("\"'")
+    return {"text": text, "topic": doc["label"]}
+
+
+__all__ = ["generate_exercise", "docs_available"]

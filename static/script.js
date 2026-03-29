@@ -35,6 +35,13 @@ const liveTimer    = document.getElementById("live-timer");
 
 loadNewExercise();
 
+(async () => {
+  try {
+    const { available } = await (await fetch("/api/docs-available")).json();
+    if (available) document.getElementById("btn-docs").style.display = "";
+  } catch {}
+})();
+
 // ── Toggle handlers ────────────────────────────────────────────
 
 function setSubject(s) {
@@ -44,6 +51,7 @@ function setSubject(s) {
   setActive("btn-all",    s === "all");
   setActive("btn-cases",  s === "cases");
   setActive("btn-custom", s === "custom");
+  setActive("btn-docs",   s === "docs");
   if (s === "custom") {
     showCustomModal();
   } else {

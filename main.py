@@ -8,7 +8,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from claude_service import generate_exercise
+from claude_service import generate_exercise, docs_available
 from database import get_bests, get_key_errors, get_sessions, init_db, save_key_errors, save_session
 
 security = HTTPBasic(auto_error=False)
@@ -43,6 +43,11 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def root(auth=Depends(check_auth)):
     with open("static/index.html", "r", encoding="utf-8") as f:
         return f.read()
+
+
+@app.get("/api/docs-available")
+async def get_docs_available(auth=Depends(check_auth)):
+    return {"available": docs_available()}
 
 
 @app.get("/api/exercise")
