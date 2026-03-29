@@ -75,16 +75,17 @@ class SessionResult(BaseModel):
     mistakes: int = 0
     key_errors: dict = {}
     date: str = ""
+    device_id: str = ""
 
 
 @app.post("/api/progress")
 async def post_progress(result: SessionResult, request: Request, auth=Depends(check_auth)):
     forwarded = request.headers.get("x-forwarded-for")
     ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "")
-    old_bests = get_bests()
-    save_session(result.wpm, result.accuracy, result.topic, result.mistakes, result.date, ip)
+    old_bests = get_bests(result.device_id)
+    save_session(result.wpm, result.accuracy, result.topic, result.mistakes, result.date, ip, result.device_id)
     if result.key_errors:
-        save_key_errors(result.key_errors)
+        save_key_errors(result.key_errors, result.device_id)
     return {
         "status": "ok",
         "new_best_wpm": result.wpm > (old_bests["best_wpm"] or 0),
@@ -96,8 +97,8 @@ async def post_progress(result: SessionResult, request: Request, auth=Depends(ch
 
 
 @app.get("/api/progress")
-async def get_progress(auth=Depends(check_auth)):
-    return get_sessions()
+async def get_progress(device_id: str = "", auth=Depends(check_auth)):
+    return get_sessions(device_id)
 
 
 @app.delete("/api/progress/{session_id}")
@@ -107,8 +108,8 @@ async def delete_progress(session_id: int, auth=Depends(check_auth)):
 
 
 @app.get("/api/heatmap")
-async def get_heatmap(auth=Depends(check_auth)):
-    return get_key_errors()
+async def get_heatmap(device_id: str = "", auth=Depends(check_auth)):
+    return get_key_errors(device_id)
 
 
 @app.get("/api/admin/sessions")

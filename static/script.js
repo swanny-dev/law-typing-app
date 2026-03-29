@@ -19,6 +19,20 @@ let sessionKeyErrors = {};
 let targetWpm        = 0;
 let blinkTimeout     = null;
 
+// ── Device ID ──────────────────────────────────────────────────
+// Generated once per browser, stored in localStorage, never shown to user.
+// Used to scope progress and heatmap data per device.
+
+function getDeviceId() {
+  let id = localStorage.getItem("lex_device_id");
+  if (!id) {
+    id = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    localStorage.setItem("lex_device_id", id);
+  }
+  return id;
+}
+const DEVICE_ID = getDeviceId();
+
 // ── Caret ──────────────────────────────────────────────────────
 
 const caret = document.createElement("div");
@@ -319,6 +333,7 @@ async function finish(typed) {
         topic: currentTopic,
         mistakes: mistakeCount,
         key_errors: sessionKeyErrors,
+        device_id: DEVICE_ID,
         date: new Date().toLocaleString("en-NZ", {
           timeZone: "Pacific/Auckland",
           day: "2-digit", month: "short", year: "numeric",
@@ -400,7 +415,7 @@ async function showProgress() {
   content.innerHTML = "<p class='no-results'>loading...</p>";
 
   try {
-    const data = await (await fetch("/api/progress")).json();
+    const data = await (await fetch(`/api/progress?device_id=${DEVICE_ID}`)).json();
 
     if (!data.length) {
       content.innerHTML = "<p class='no-results'>no sessions yet — finish an exercise to see your progress</p>";
@@ -661,7 +676,7 @@ async function showHeatmap() {
   content.innerHTML = "<p class='no-results'>loading...</p>";
 
   try {
-    const errors = await (await fetch("/api/heatmap")).json();
+    const errors = await (await fetch(`/api/heatmap?device_id=${DEVICE_ID}`)).json();
     renderHeatmap(errors, content);
   } catch {
     content.innerHTML = "<p class='no-results'>failed to load heatmap</p>";
