@@ -1,7 +1,8 @@
 import sqlite3
 from datetime import datetime  # fallback for local dev
 
-DB_PATH = "progress.db"
+import os
+DB_PATH = os.getenv("DB_PATH", "progress.db")
 
 
 def init_db():
