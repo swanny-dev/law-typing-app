@@ -53,25 +53,14 @@ body {
   margin-bottom: 2.4rem;
 }
 
-.brand { display: flex; align-items: baseline; gap: 0.6rem; }
+.brand { display: flex; align-items: center; }
 
-.brand-name {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.6rem;
-  font-weight: 700;
-  background: var(--grad);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.03em;
-}
-
-.brand-tag {
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--border2);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+.brand-logo {
+  height: 48px;
+  width: auto;
+  border-radius: 8px;
+  object-fit: contain;
+  transition: opacity 0.6s ease;
 }
 
 /* ── Options bar ────────────────────────────────────────────── */

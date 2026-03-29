@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lex — Law Typing Practice</title>
+  <title>Targeted Typing Test</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
@@ -15,8 +15,7 @@
 
     <header class="app-header">
       <div class="brand">
-        <span class="brand-name">lex</span>
-        <span class="brand-tag">law typing</span>
+        <img id="app-logo" src="/static/avo1.jpg" alt="Targeted Typing Test" class="brand-logo">
       </div>
       <div class="header-nav">
         <button class="btn-ghost" onclick="showHeatmap()">heatmap</button>
@@ -116,7 +115,6 @@
     <header class="app-header">
       <div class="brand">
         <span class="brand-name">lex</span>
-        <span class="brand-tag">progress</span>
       </div>
       <button class="btn-ghost" onclick="showExercise()">← back</button>
     </header>
@@ -128,7 +126,6 @@
     <header class="app-header">
       <div class="brand">
         <span class="brand-name">lex</span>
-        <span class="brand-tag">heatmap</span>
       </div>
       <button class="btn-ghost" onclick="showExercise()">← back</button>
     </header>
@@ -155,5 +152,10 @@
   </div>
 
   <script src="/static/script.js"></script>
+  <script>
+    const logos = ["/static/avo1.jpg", "/static/avo2.jpg"];
+    const logoEl = document.getElementById("app-logo");
+    logoEl.src = logos[Math.floor(Math.random() * logos.length)];
+  </script>
 </body>
 </html>
