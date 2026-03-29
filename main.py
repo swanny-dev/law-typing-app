@@ -8,7 +8,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from claude_service import generate_exercise, docs_available
+from claude_service import generate_exercise, generate_counsel_exercise, docs_available
 from database import delete_session, get_admin_sessions, get_bests, get_key_errors, get_sessions, init_db, save_key_errors, save_session
 
 security = HTTPBasic(auto_error=False)
@@ -48,6 +48,14 @@ async def root(auth=Depends(check_auth)):
 @app.get("/api/docs-available")
 async def get_docs_available(auth=Depends(check_auth)):
     return {"available": docs_available()}
+
+
+@app.get("/api/exercise/counsel")
+async def get_counsel_exercise(keys: str = "", auth=Depends(check_auth)):
+    key_list = [k.strip() for k in keys.split(",") if k.strip()]
+    if not key_list:
+        raise HTTPException(status_code=400, detail="keys parameter required")
+    return await generate_counsel_exercise(key_list)
 
 
 @app.get("/api/exercise")

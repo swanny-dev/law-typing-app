@@ -360,6 +360,38 @@ function showResults(wpm, accuracy, elapsed, mistakes, newBestWpm, newBestMistak
   launchFireworks();
 }
 
+// ── Streak ─────────────────────────────────────────────────────
+
+function calcStreak(sessions) {
+  // Get unique session days as "YYYY-MM-DD" strings for reliable comparison
+  const days = [...new Set(sessions.map(r => {
+    // date format: "29 Mar 2026, 14:30" — parse to a normalized date string
+    const parts = r.date.split(",")[0].trim().split(" ");
+    const months = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+    const d = new Date(parts[2], months[parts[1]], parts[0]);
+    return d.toDateString();
+  }))].map(s => new Date(s)).sort((a, b) => b - a); // newest first
+
+  if (!days.length) return 0;
+
+  // Check if today or yesterday has a session (streak must be recent)
+  const today     = new Date(); today.setHours(0,0,0,0);
+  const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+  const newest    = new Date(days[0]); newest.setHours(0,0,0,0);
+
+  if (newest < yesterday) return 0; // streak broken
+
+  let streak = 1;
+  for (let i = 1; i < days.length; i++) {
+    const prev = new Date(days[i - 1]); prev.setHours(0,0,0,0);
+    const curr = new Date(days[i]);     curr.setHours(0,0,0,0);
+    const diffDays = Math.round((prev - curr) / 86400000);
+    if (diffDays === 1) streak++;
+    else break;
+  }
+  return streak;
+}
+
 // ── Progress ───────────────────────────────────────────────────
 
 async function showProgress() {
@@ -376,6 +408,16 @@ async function showProgress() {
     }
 
     content.innerHTML = "";
+
+    // ── Streak ──
+    const streak = calcStreak(data);
+    if (streak > 0) {
+      content.insertAdjacentHTML("beforeend", `
+        <div class="streak-bar">
+          <span class="streak-count">${streak}</span>
+          <span class="streak-label">day streak</span>
+        </div>`);
+    }
 
     // ── WPM graph ──
     const canvas = document.createElement("canvas");
@@ -656,6 +698,64 @@ function renderHeatmap(errors, container) {
   html += `</div>`;
   container.innerHTML = html;
   renderImprovementTips(errors, container);
+
+  // ── Mistake Counsel ──
+  const topKeys = Object.entries(errors)
+    .sort((a, b) => b[1] - a[1])
+    .filter(([, c]) => c > 0)
+    .slice(0, 5)
+    .map(([k]) => k);
+
+  if (topKeys.length) {
+    container.insertAdjacentHTML("beforeend", `
+      <div class="counsel-wrap">
+        <p class="improvements-heading">mistake counsel</p>
+        <p class="counsel-desc">Generate a targeted exercise that drills the key pairs and characters you make the most errors on.</p>
+        <div class="counsel-keys">
+          ${topKeys.map(k => `<span class="counsel-key">${k}</span>`).join("")}
+        </div>
+        <button class="btn-action counsel-btn" onclick="loadCounselExercise(${JSON.stringify(topKeys)})">generate exercise</button>
+        <div id="counsel-result"></div>
+      </div>`);
+  }
+}
+
+async function loadCounselExercise(keys) {
+  const btn    = document.querySelector(".counsel-btn");
+  const result = document.getElementById("counsel-result");
+  btn.disabled    = true;
+  btn.textContent = "generating...";
+  result.innerHTML = "";
+
+  try {
+    const res  = await fetch(`/api/exercise/counsel?keys=${encodeURIComponent(keys.join(","))}`);
+    const data = await res.json();
+
+    result.innerHTML = `
+      <div class="counsel-exercise">
+        <p class="counsel-exercise-text">${data.text}</p>
+        <button class="btn-ghost-sm" onclick="useCounselExercise(${JSON.stringify(data.text)})">type this exercise</button>
+      </div>`;
+  } catch {
+    result.innerHTML = "<p class='counsel-error'>failed to generate — try again</p>";
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = "generate exercise";
+  }
+}
+
+function useCounselExercise(text) {
+  customText     = text;
+  rawPassage     = text;
+  currentPassage = applyCase(text);
+  currentTopic   = "mistake counsel";
+  currentSubject = "custom";
+  ["btn-pub","btn-crim","btn-all","btn-cases","btn-custom","btn-docs"]
+    .forEach(id => setActive(id, id === "btn-custom"));
+  showScreen("exercise-screen");
+  resetState();
+  renderExercise();
+  hiddenInput.focus();
 }
 
 // ── Custom text modal ──────────────────────────────────────────

@@ -726,6 +726,98 @@ body {
   align-items: center;
 }
 
+/* ── Logo link ──────────────────────────────────────────────── */
+
+.logo-link { cursor: pointer; }
+
+/* ── Streak ─────────────────────────────────────────────────── */
+
+.streak-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.streak-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2.8rem;
+  font-weight: 700;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.streak-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--border2);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* ── Mistake Counsel ────────────────────────────────────────── */
+
+.counsel-wrap {
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.counsel-desc {
+  font-size: 0.78rem;
+  color: var(--border2);
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1.6;
+}
+
+.counsel-keys {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.counsel-key {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  background: var(--surf2);
+  border: 1px solid var(--border2);
+  color: var(--error);
+  font-weight: 600;
+}
+
+.counsel-btn { align-self: flex-start; }
+
+.counsel-exercise {
+  background: var(--surf);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.4rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.counsel-exercise-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  color: var(--mid);
+  line-height: 1.9;
+}
+
+.counsel-error {
+  font-size: 0.78rem;
+  color: var(--error);
+  font-family: 'JetBrains Mono', monospace;
+}
+
 /* ── WPM graph ──────────────────────────────────────────────── */
 
 .wpm-graph-canvas {

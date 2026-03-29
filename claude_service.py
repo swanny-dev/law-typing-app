@@ -140,4 +140,39 @@ async def _generate_doc_exercise(word_count: str, style: str) -> dict:
     return {"text": text, "topic": doc["label"]}
 
 
-__all__ = ["generate_exercise", "docs_available"]
+async def generate_counsel_exercise(keys: list[str]) -> dict:
+    """Generate a targeted exercise heavy with words containing the given error keys."""
+    key_list = ", ".join(f"'{k}'" for k in keys)
+    # Build bigram context: pairs of adjacent keys are harder to type quickly
+    bigrams = [f"{keys[i]}{keys[i+1]}" for i in range(len(keys) - 1)]
+    bigram_note = (
+        f"Pay particular attention to key pairs (bigrams) such as: {', '.join(bigrams[:4])}. "
+        if bigrams else ""
+    )
+
+    response = await client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=300,
+        messages=[{
+            "role": "user",
+            "content": (
+                f"Write a typing exercise for a law student that is specifically designed to "
+                f"improve accuracy on these frequently mistyped keys: {key_list}.\n\n"
+                f"{bigram_note}"
+                f"The passage must:\n"
+                f"- Be a single paragraph of 60 to 80 words\n"
+                f"- Be written in formal legal language (law essay or textbook style)\n"
+                f"- Heavily feature words that contain the specified keys — these characters "
+                f"should appear far more frequently than in a typical passage\n"
+                f"- Include NZ statute names or case references where natural\n"
+                f"- Do not use bullet points, headings, or numbered lists\n"
+                f"- Return only the paragraph text. No introduction, no title, no quotation marks."
+            ),
+        }],
+    )
+
+    text = response.content[0].text.strip().strip("\"'")
+    return {"text": text, "topic": "mistake counsel"}
+
+
+__all__ = ["generate_exercise", "generate_counsel_exercise", "docs_available"]
