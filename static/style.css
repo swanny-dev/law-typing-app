@@ -725,3 +725,62 @@ body {
   gap: 0.75rem;
   align-items: center;
 }
+
+/* ── WPM graph ──────────────────────────────────────────────── */
+
+.wpm-graph-canvas {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  background: var(--surf);
+  border: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+/* ── Improvement tips ───────────────────────────────────────── */
+
+.improvements-wrap {
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 2rem;
+}
+
+.improvements-heading {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--border2);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 1.25rem;
+}
+
+.tip-item {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.tip-item:last-child { margin-bottom: 0; }
+
+.tip-marker {
+  color: var(--accent);
+  font-size: 0.6rem;
+  margin-top: 0.38rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.tip-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  color: var(--mid);
+  line-height: 1.75;
+  font-style: italic;
+}
+
+.tip-text strong {
+  color: var(--bright);
+  font-style: normal;
+  font-weight: 500;
+}

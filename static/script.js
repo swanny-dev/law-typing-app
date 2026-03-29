@@ -375,7 +375,16 @@ async function showProgress() {
       return;
     }
 
-    content.innerHTML = `
+    content.innerHTML = "";
+
+    // ── WPM graph ──
+    const canvas = document.createElement("canvas");
+    canvas.className = "wpm-graph-canvas";
+    content.appendChild(canvas);
+    renderWpmGraph(canvas, data);
+
+    // ── Session table ──
+    content.insertAdjacentHTML("beforeend", `
       <table class="progress-table">
         <thead><tr><th>date</th><th>wpm</th><th>accuracy</th><th>mistakes</th><th>topic</th><th></th></tr></thead>
         <tbody>
@@ -389,10 +398,116 @@ async function showProgress() {
               <td class="delete-cell"><button class="delete-row-btn" onclick="deleteSession(${r.id})">×</button></td>
             </tr>`).join("")}
         </tbody>
-      </table>`;
+      </table>`);
   } catch {
     content.innerHTML = "<p class='no-results'>failed to load progress</p>";
   }
+}
+
+function renderWpmGraph(canvas, data) {
+  const dayMap = new Map();
+  for (let i = data.length - 1; i >= 0; i--) {
+    const key = data[i].date.split(",")[0].trim();
+    if (!dayMap.has(key)) dayMap.set(key, []);
+    dayMap.get(key).push(data[i].wpm);
+  }
+
+  const labels  = [...dayMap.keys()];
+  const avgWpms = labels.map(d => {
+    const vals = dayMap.get(d);
+    return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+  });
+  const maxWpms = labels.map(d => Math.max(...dayMap.get(d)));
+  const n       = labels.length;
+
+  const W = canvas.parentElement.clientWidth || 780;
+  const H = 220;
+  canvas.width  = W;
+  canvas.height = H;
+
+  const pad   = { top: 28, right: 20, bottom: 44, left: 44 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top  - pad.bottom;
+  const ctx   = canvas.getContext("2d");
+
+  const allVals = [...avgWpms, ...maxWpms];
+  const yMin    = Math.max(0, Math.floor(Math.min(...allVals) / 10) * 10 - 10);
+  const yMax    = Math.ceil(Math.max(...allVals) / 10) * 10 + 10;
+
+  const toX = i => n < 2 ? pad.left + plotW / 2 : pad.left + (i / (n - 1)) * plotW;
+  const toY = v => pad.top + (1 - (v - yMin) / (yMax - yMin)) * plotH;
+
+  // Gridlines + Y labels
+  ctx.font         = "11px 'JetBrains Mono', monospace";
+  ctx.textAlign    = "right";
+  ctx.textBaseline = "middle";
+  for (let g = 0; g <= 4; g++) {
+    const v = yMin + (yMax - yMin) * (g / 4);
+    const y = toY(v);
+    ctx.strokeStyle = "rgba(31,31,44,0.9)";
+    ctx.lineWidth   = 1;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+    ctx.fillStyle = "#7070a0";
+    ctx.fillText(Math.round(v), pad.left - 6, y);
+  }
+
+  // X-axis date labels
+  const step = Math.max(1, Math.ceil((n * 50) / plotW));
+  ctx.textAlign    = "center";
+  ctx.textBaseline = "top";
+  ctx.fillStyle    = "#7070a0";
+  for (let i = 0; i < n; i += step) {
+    const short = labels[i].split(" ").slice(0, 2).join(" ");
+    ctx.fillText(short, toX(i), H - pad.bottom + 8);
+  }
+
+  // Filled area under avg line
+  if (n >= 2) {
+    ctx.beginPath();
+    ctx.moveTo(toX(0), toY(avgWpms[0]));
+    for (let i = 1; i < n; i++) ctx.lineTo(toX(i), toY(avgWpms[i]));
+    ctx.lineTo(toX(n - 1), toY(yMin));
+    ctx.lineTo(toX(0), toY(yMin));
+    ctx.closePath();
+    ctx.fillStyle = "rgba(129,140,248,0.08)";
+    ctx.fill();
+  }
+
+  function drawLine(values, color) {
+    if (n >= 2) {
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = 2;
+      ctx.lineJoin    = "round";
+      ctx.lineCap     = "round";
+      ctx.moveTo(toX(0), toY(values[0]));
+      for (let i = 1; i < n; i++) ctx.lineTo(toX(i), toY(values[i]));
+      ctx.stroke();
+    }
+    for (let i = 0; i < n; i++) {
+      ctx.beginPath(); ctx.arc(toX(i), toY(values[i]), 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = color; ctx.fill();
+      ctx.beginPath(); ctx.arc(toX(i), toY(values[i]), 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = "#e8e8ff"; ctx.fill();
+    }
+  }
+
+  drawLine(avgWpms, "#818cf8");
+  drawLine(maxWpms, "#c084fc");
+
+  // Legend
+  const items = [["#c084fc", "peak wpm"], ["#818cf8", "avg wpm"]];
+  ctx.font         = "10px 'JetBrains Mono', monospace";
+  ctx.textAlign    = "right";
+  ctx.textBaseline = "middle";
+  items.forEach(([col, label], j) => {
+    const lx = W - pad.right - 4;
+    const ly = pad.top + 6 + j * 16;
+    ctx.fillStyle = col;
+    ctx.fillRect(lx - ctx.measureText(label).width - 14, ly - 4, 8, 8);
+    ctx.fillStyle = "#7070a0";
+    ctx.fillText(label, lx, ly);
+  });
 }
 
 async function deleteSession(id) {
@@ -401,6 +516,91 @@ async function deleteSession(id) {
     const row = document.querySelector(`tr[data-id="${id}"]`);
     if (row) row.remove();
   } catch {}
+}
+
+// ── Improvement tips ───────────────────────────────────────────
+
+const KEY_WORDS = {
+  e: ["evidence","procedure","decree"],       r: ["requirements","procedural","ratio"],
+  t: ["statute","tort","constitution"],        a: ["affidavit","plaintiff","mandamus"],
+  i: ["injunction","jurisdiction","judicial"], o: ["obligation","prosecution","court"],
+  n: ["consideration","defendant","injunction"],s: ["statute","submissions","standing"],
+  c: ["constitution","contract","conviction"], l: ["legislation","legal","liability"],
+  d: ["defendant","doctrine","disclosure"],    m: ["mandamus","mens rea","magistrate"],
+  p: ["plaintiff","prosecution","procedure"],  u: ["unreasonableness","ultra vires","unlawful"],
+  f: ["fairness","findings","fundamental"],    g: ["grounds","grievance","guilt"],
+  h: ["habeas corpus","hearing","hierarchy"],  j: ["judgment","jurisdiction","justiciable"],
+  k: ["knowledge","knowing","key"],            b: ["burden","breach","beyond reasonable doubt"],
+  v: ["verdict","vires","voluntary"],          w: ["warrant","wrongful","witness"],
+  x: ["express","exception","exclusion"],      y: ["yield","yet","yardstick"],
+  z: ["zero","zone","zealous"],
+  ",": ["statutory lists","clauses","enumerations"],
+  ".": ["ratio decidendi","full stops","sentence endings"],
+};
+
+function generateImprovementTips(errors) {
+  const entries = Object.entries(errors).sort((a, b) => b[1] - a[1]).filter(([, c]) => c > 0);
+  if (!entries.length) return null;
+
+  const topKeys = entries.slice(0, 5).map(([k]) => k);
+  const top2    = topKeys.slice(0, 2);
+  const vowels  = topKeys.filter(k => "aeiou".includes(k));
+  const hasSpace = topKeys.includes("space");
+  const punct   = topKeys.filter(k => [",", "."].includes(k));
+  const tips    = [];
+
+  // Tip 1: vowels
+  if (vowels.length >= 1) {
+    const vList = vowels.map(v => `'${v}'`).join(" and ");
+    const words = vowels.flatMap(v => (KEY_WORDS[v] || []).slice(0, 2));
+    tips.push(`It is submitted that the preponderance of your procedural errors arise on vowel keys — specifically ${vList}. These characters are foundational to legal terminology such as <strong>'${words[0]}'</strong> and <strong>'${words[1] || words[0]}'</strong>. Targeted remediation of vowel precision is hereby warranted.`);
+  }
+
+  // Tip 2: top 2 specific keys
+  const nonVowelTop = top2.filter(k => !"aeiou".includes(k) && k !== "space" && k !== "," && k !== ".");
+  const keyTipKeys  = nonVowelTop.length ? nonVowelTop : top2.filter(k => k !== "space");
+  if (keyTipKeys.length >= 1) {
+    const kList = keyTipKeys.slice(0, 2).map(k => `'${k}'`).join(" and ");
+    const words = keyTipKeys.flatMap(k => (KEY_WORDS[k] || []).slice(0, 2)).slice(0, 2);
+    const wordStr = words.length >= 2
+      ? `<strong>'${words[0]}'</strong> and <strong>'${words[1]}'</strong>`
+      : `<strong>'${words[0] || keyTipKeys[0]}'</strong>`;
+    tips.push(`The record discloses that ${kList} constitute your most frequent sources of inaccuracy. Words of legal significance — including ${wordStr} — rely upon these keys. Counsel would be well-advised to drill these characters in isolation before proceeding to full-passage exercises.`);
+  }
+
+  // Tip 3: space
+  if (hasSpace && tips.length < 3) {
+    tips.push(`It is further noted that the spacebar appears among your error keys, suggesting premature or delayed word boundaries are contributing to your overall inaccuracy. Deliberate attention to inter-word spacing constitutes a sound remedial measure.`);
+  }
+
+  // Tip 4: punctuation
+  if (punct.length >= 1 && tips.length < 3) {
+    const pList = punct.map(p => `'${p}'`).join(" and ");
+    tips.push(`The commission of errors on punctuation keys (${pList}) warrants particular attention; in formal legal drafting, errant punctuation may materially alter the construction of a clause or the ratio of an argument.`);
+  }
+
+  // Fallback
+  if (tips.length < 2) {
+    const t3 = topKeys.slice(0, 3).map(k => `'${k}'`).join(", ");
+    tips.push(`On the balance of the evidence, a daily drilling regimen of five minutes on your top error characters — <strong>${t3}</strong> — is submitted as the most efficacious path toward achieving the precision befitting legal practice.`);
+  }
+
+  return tips.slice(0, 3);
+}
+
+function renderImprovementTips(errors, container) {
+  const tips = generateImprovementTips(errors);
+  if (!tips) return;
+  const html = `
+    <div class="improvements-wrap">
+      <p class="improvements-heading">remediation counsel</p>
+      ${tips.map(t => `
+        <div class="tip-item">
+          <span class="tip-marker">◆</span>
+          <p class="tip-text">${t}</p>
+        </div>`).join("")}
+    </div>`;
+  container.insertAdjacentHTML("beforeend", html);
 }
 
 // ── Heatmap ────────────────────────────────────────────────────
@@ -455,6 +655,7 @@ function renderHeatmap(errors, container) {
 
   html += `</div>`;
   container.innerHTML = html;
+  renderImprovementTips(errors, container);
 }
 
 // ── Custom text modal ──────────────────────────────────────────
