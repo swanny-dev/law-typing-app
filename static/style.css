@@ -216,7 +216,7 @@ body {
   font-family: 'JetBrains Mono', monospace;
   font-size: 1.35rem;
   line-height: 2.2;
-  word-break: break-word;
+  word-break: normal;
   pointer-events: none;
   user-select: none;
   position: relative;
