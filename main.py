@@ -2,7 +2,7 @@ import os
 import secrets
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
@@ -70,9 +70,11 @@ class SessionResult(BaseModel):
 
 
 @app.post("/api/progress")
-async def post_progress(result: SessionResult, auth=Depends(check_auth)):
+async def post_progress(result: SessionResult, request: Request, auth=Depends(check_auth)):
+    forwarded = request.headers.get("x-forwarded-for")
+    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "")
     old_bests = get_bests()
-    save_session(result.wpm, result.accuracy, result.topic, result.mistakes, result.date)
+    save_session(result.wpm, result.accuracy, result.topic, result.mistakes, result.date, ip)
     if result.key_errors:
         save_key_errors(result.key_errors)
     return {
@@ -99,6 +101,19 @@ async def delete_progress(session_id: int, auth=Depends(check_auth)):
 @app.get("/api/heatmap")
 async def get_heatmap(auth=Depends(check_auth)):
     return get_key_errors()
+
+
+@app.get("/api/admin/sessions")
+async def admin_sessions(key: str = "", auth=Depends(check_auth)):
+    admin_key = os.getenv("ADMIN_KEY")
+    if not admin_key or not secrets.compare_digest(key, admin_key):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    conn = __import__("sqlite3").connect(__import__("os").getenv("DB_PATH", "progress.db"))
+    rows = conn.execute(
+        "SELECT id, date, wpm, accuracy, topic, mistakes, ip FROM sessions ORDER BY id DESC LIMIT 100"
+    ).fetchall()
+    conn.close()
+    return [{"id": r[0], "date": r[1], "wpm": r[2], "accuracy": r[3], "topic": r[4], "mistakes": r[5], "ip": r[6]} for r in rows]
 
 
 if __name__ == "__main__":

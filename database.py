@@ -23,20 +23,24 @@ def init_db():
             count INTEGER NOT NULL DEFAULT 0
         )
     """)
-    # migrate existing databases that lack the mistakes column
-    try:
-        conn.execute("ALTER TABLE sessions ADD COLUMN mistakes INTEGER NOT NULL DEFAULT 0")
-    except Exception:
-        pass
+    # migrate existing databases
+    for migration in [
+        "ALTER TABLE sessions ADD COLUMN mistakes INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE sessions ADD COLUMN ip TEXT NOT NULL DEFAULT ''",
+    ]:
+        try:
+            conn.execute(migration)
+        except Exception:
+            pass
     conn.commit()
     conn.close()
 
 
-def save_session(wpm: float, accuracy: float, topic: str, mistakes: int, date: str = ""):
+def save_session(wpm: float, accuracy: float, topic: str, mistakes: int, date: str = "", ip: str = ""):
     conn = sqlite3.connect(DB_PATH)
     conn.execute(
-        "INSERT INTO sessions (date, wpm, accuracy, topic, mistakes) VALUES (?, ?, ?, ?, ?)",
-        (date or datetime.now().strftime("%d %b %Y, %H:%M"), round(wpm), round(accuracy), topic, mistakes),
+        "INSERT INTO sessions (date, wpm, accuracy, topic, mistakes, ip) VALUES (?, ?, ?, ?, ?, ?)",
+        (date or datetime.now().strftime("%d %b %Y, %H:%M"), round(wpm), round(accuracy), topic, mistakes, ip),
     )
     conn.commit()
     conn.close()
