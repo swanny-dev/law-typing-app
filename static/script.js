@@ -278,10 +278,10 @@ function showResults(wpm, accuracy, elapsed, mistakes, newBestWpm, newBestMistak
 
   showScreen("results-screen");
 
-  // WPM bounce
+  // WPM bounce — animate the inner span so transform doesn't break gradient text
   const wpmEl = document.getElementById("res-wpm");
   wpmEl.classList.remove("wpm-dance");
-  void wpmEl.offsetWidth; // force reflow so animation restarts
+  void wpmEl.offsetWidth;
   wpmEl.classList.add("wpm-dance");
 
   // fireworks
