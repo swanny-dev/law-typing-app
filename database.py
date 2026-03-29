@@ -14,8 +14,7 @@ def init_db():
             wpm REAL NOT NULL,
             accuracy REAL NOT NULL,
             topic TEXT NOT NULL,
-            mistakes INTEGER NOT NULL DEFAULT 0,
-            user TEXT NOT NULL DEFAULT ''
+            mistakes INTEGER NOT NULL DEFAULT 0
         )
     """)
     conn.execute("""
@@ -24,24 +23,20 @@ def init_db():
             count INTEGER NOT NULL DEFAULT 0
         )
     """)
-    # migrate existing databases
-    for migration in [
-        "ALTER TABLE sessions ADD COLUMN mistakes INTEGER NOT NULL DEFAULT 0",
-        "ALTER TABLE sessions ADD COLUMN user TEXT NOT NULL DEFAULT ''",
-    ]:
-        try:
-            conn.execute(migration)
-        except Exception:
-            pass
+    # migrate existing databases that lack the mistakes column
+    try:
+        conn.execute("ALTER TABLE sessions ADD COLUMN mistakes INTEGER NOT NULL DEFAULT 0")
+    except Exception:
+        pass
     conn.commit()
     conn.close()
 
 
-def save_session(wpm: float, accuracy: float, topic: str, mistakes: int, date: str = "", user: str = ""):
+def save_session(wpm: float, accuracy: float, topic: str, mistakes: int, date: str = ""):
     conn = sqlite3.connect(DB_PATH)
     conn.execute(
-        "INSERT INTO sessions (date, wpm, accuracy, topic, mistakes, user) VALUES (?, ?, ?, ?, ?, ?)",
-        (date or datetime.now().strftime("%d %b %Y, %H:%M"), round(wpm), round(accuracy), topic, mistakes, user),
+        "INSERT INTO sessions (date, wpm, accuracy, topic, mistakes) VALUES (?, ?, ?, ?, ?)",
+        (date or datetime.now().strftime("%d %b %Y, %H:%M"), round(wpm), round(accuracy), topic, mistakes),
     )
     conn.commit()
     conn.close()
@@ -59,10 +54,10 @@ def save_key_errors(errors: dict):
 def get_sessions() -> list:
     conn = sqlite3.connect(DB_PATH)
     rows = conn.execute(
-        "SELECT date, wpm, accuracy, topic, mistakes, user FROM sessions ORDER BY id DESC LIMIT 50"
+        "SELECT date, wpm, accuracy, topic, mistakes FROM sessions ORDER BY id DESC LIMIT 30"
     ).fetchall()
     conn.close()
-    return [{"date": r[0], "wpm": r[1], "accuracy": r[2], "topic": r[3], "mistakes": r[4], "user": r[5]} for r in rows]
+    return [{"date": r[0], "wpm": r[1], "accuracy": r[2], "topic": r[3], "mistakes": r[4]} for r in rows]
 
 
 def get_key_errors() -> dict:
@@ -72,13 +67,8 @@ def get_key_errors() -> dict:
     return {r[0]: r[1] for r in rows}
 
 
-def get_bests(user: str = "") -> dict:
+def get_bests() -> dict:
     conn = sqlite3.connect(DB_PATH)
-    if user:
-        row = conn.execute(
-            "SELECT MAX(wpm), MIN(mistakes) FROM sessions WHERE user = ?", (user,)
-        ).fetchone()
-    else:
-        row = conn.execute("SELECT MAX(wpm), MIN(mistakes) FROM sessions").fetchone()
+    row = conn.execute("SELECT MAX(wpm), MIN(mistakes) FROM sessions").fetchone()
     conn.close()
     return {"best_wpm": row[0] or 0, "fewest_mistakes": row[1]}
