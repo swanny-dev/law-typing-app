@@ -56,10 +56,11 @@ body {
 .brand { display: flex; align-items: center; }
 
 .brand-logo {
-  height: 28px;
+  height: 20px;
   width: auto;
-  border-radius: 4px;
+  border-radius: 3px;
   object-fit: contain;
+  opacity: 0.85;
 }
 
 /* ── Options bar ────────────────────────────────────────────── */
