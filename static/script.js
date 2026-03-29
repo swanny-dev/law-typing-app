@@ -381,7 +381,7 @@ async function showProgress() {
           ${data.map(r => `
             <tr>
               <td>${r.date}</td>
-              <td class="wpm-cell">${r.wpm}</td>
+              <td class="wpm-cell"><span>${r.wpm}</span></td>
               <td class="acc-cell">${r.accuracy}%</td>
               <td class="mistakes-cell">${r.mistakes}</td>
               <td>${r.topic}</td>
