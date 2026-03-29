@@ -183,7 +183,8 @@ function renderExercise() {
   textDisplay.innerHTML = Array.from(currentPassage)
     .map((ch, i) => {
       const display = ch === " " ? "\u00b7" : ch;
-      return `<span data-i="${i}" data-char="${encodeChar(ch)}">${display}</span>`;
+      const wbr     = ch === " " ? "<wbr>" : "";
+      return `<span data-i="${i}" data-char="${encodeChar(ch)}">${display}</span>${wbr}`;
     })
     .join("");
 
