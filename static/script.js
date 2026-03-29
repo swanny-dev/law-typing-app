@@ -252,6 +252,11 @@ async function finish(typed) {
         topic: currentTopic,
         mistakes: mistakeCount,
         key_errors: sessionKeyErrors,
+        date: new Date().toLocaleString("en-NZ", {
+          timeZone: "Pacific/Auckland",
+          day: "2-digit", month: "short", year: "numeric",
+          hour: "2-digit", minute: "2-digit", hour12: false,
+        }),
       }),
     });
     const data  = await res.json();

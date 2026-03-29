@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime  # fallback for local dev
 
 DB_PATH = "progress.db"
 
@@ -31,11 +31,11 @@ def init_db():
     conn.close()
 
 
-def save_session(wpm: float, accuracy: float, topic: str, mistakes: int):
+def save_session(wpm: float, accuracy: float, topic: str, mistakes: int, date: str = ""):
     conn = sqlite3.connect(DB_PATH)
     conn.execute(
         "INSERT INTO sessions (date, wpm, accuracy, topic, mistakes) VALUES (?, ?, ?, ?, ?)",
-        (datetime.now().strftime("%d %b %Y, %H:%M"), round(wpm), round(accuracy), topic, mistakes),
+        (date or datetime.now().strftime("%d %b %Y, %H:%M"), round(wpm), round(accuracy), topic, mistakes),
     )
     conn.commit()
     conn.close()

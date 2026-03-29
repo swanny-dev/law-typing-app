@@ -61,12 +61,13 @@ class SessionResult(BaseModel):
     topic: str
     mistakes: int = 0
     key_errors: dict = {}
+    date: str = ""
 
 
 @app.post("/api/progress")
 async def post_progress(result: SessionResult, auth=Depends(check_auth)):
     old_bests = get_bests()
-    save_session(result.wpm, result.accuracy, result.topic, result.mistakes)
+    save_session(result.wpm, result.accuracy, result.topic, result.mistakes, result.date)
     if result.key_errors:
         try:
             save_key_errors(result.key_errors)
