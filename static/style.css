@@ -218,6 +218,7 @@ body {
   word-break: break-word;
   pointer-events: none;
   user-select: none;
+  position: relative;
 }
 
 #text-display span          { color: var(--dim); }
@@ -227,17 +228,31 @@ body {
   background: rgba(244,63,94,.13);
   border-radius: 3px;
 }
-#text-display span.cursor {
+
+/* ── Smooth caret ───────────────────────────────────────────── */
+
+#caret {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  border-radius: 1px;
   background: var(--cursor);
-  color: var(--bg);
-  border-radius: 3px;
-  box-shadow: 0 0 10px rgba(250,204,21,.65), 0 0 22px rgba(250,204,21,.25);
-  animation: blink 1s step-end infinite;
+  box-shadow: 0 0 8px rgba(250,204,21,.8), 0 0 18px rgba(250,204,21,.3);
+  pointer-events: none;
+  transform: translate(0, 0);
+  transition: transform 80ms cubic-bezier(0.4, 0, 0.2, 1);
+  animation: caret-blink 1s step-end infinite;
 }
 
-@keyframes blink {
-  0%,100% { opacity:1; }
-  50%      { opacity:0; }
+#caret.typing {
+  animation: none;
+  opacity: 1;
+}
+
+@keyframes caret-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
 }
 
 /* ── Click hint ─────────────────────────────────────────────── */

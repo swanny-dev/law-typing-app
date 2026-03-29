@@ -17,6 +17,39 @@ let mistakeCount     = 0;
 let prevTypedLen     = 0;
 let sessionKeyErrors = {};
 let targetWpm        = 0;
+let blinkTimeout     = null;
+
+// ── Caret ──────────────────────────────────────────────────────
+
+const caret = document.createElement("div");
+caret.id = "caret";
+
+function moveCaret(index, instant = false) {
+  const span = getSpan(index);
+  if (!span) return;
+  if (!textDisplay.contains(caret)) textDisplay.appendChild(caret);
+
+  const spanRect      = span.getBoundingClientRect();
+  const containerRect = textDisplay.getBoundingClientRect();
+  const x = spanRect.left - containerRect.left;
+  const y = spanRect.top  - containerRect.top;
+
+  caret.style.height = spanRect.height + "px";
+
+  if (instant) {
+    caret.style.transition = "none";
+    caret.style.transform  = `translate(${x}px, ${y}px)`;
+    caret.offsetHeight; // force reflow
+    caret.style.transition = "";
+  } else {
+    caret.style.transform = `translate(${x}px, ${y}px)`;
+  }
+
+  // pause blink while typing, resume after 500 ms idle
+  caret.classList.add("typing");
+  clearTimeout(blinkTimeout);
+  blinkTimeout = setTimeout(() => caret.classList.remove("typing"), 500);
+}
 
 // ── DOM refs ───────────────────────────────────────────────────
 
@@ -154,7 +187,9 @@ function renderExercise() {
     })
     .join("");
 
-  getSpan(0).classList.add("cursor");
+  // place caret instantly at position 0 (no slide animation on fresh render)
+  requestAnimationFrame(() => moveCaret(0, true));
+
   restartBtn.style.display   = "inline-block";
   clickHint.style.display    = "block";
   liveStats.style.visibility = "hidden";
@@ -188,13 +223,13 @@ hiddenInput.addEventListener("input", function () {
 
   for (let i = 0; i < currentPassage.length; i++) {
     const span = getSpan(i);
-    span.classList.remove("correct", "incorrect", "cursor");
+    span.classList.remove("correct", "incorrect");
     if (i < typed.length) {
       span.classList.add(typed[i] === currentPassage[i] ? "correct" : "incorrect");
-    } else if (i === typed.length) {
-      span.classList.add("cursor");
     }
   }
+
+  if (typed.length < currentPassage.length) moveCaret(typed.length);
 
   exerciseArea.style.setProperty("--progress", (typed.length / currentPassage.length * 100) + "%");
 
@@ -266,6 +301,7 @@ function focusInput() { hiddenInput.focus(); }
 async function finish(typed) {
   finished = true;
   clearInterval(wpmInterval);
+  if (caret.parentNode) caret.parentNode.removeChild(caret);
 
   const elapsed  = (Date.now() - startTime) / 1000;
   const wpm      = Math.round((currentPassage.length / 5) / (elapsed / 60));
