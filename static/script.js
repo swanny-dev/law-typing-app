@@ -83,6 +83,8 @@ function setTargetWpm(t) {
   setActive("btn-tgt-40",  t === 40);
   setActive("btn-tgt-60",  t === 60);
   setActive("btn-tgt-80",  t === 80);
+  exerciseArea.style.setProperty("--target-visible", t > 0 ? "block" : "none");
+  if (t === 0) liveWpm.classList.remove("on-target");
 }
 
 function setActive(id, on) {
@@ -135,6 +137,7 @@ function renderExercise() {
   hiddenInput.value      = "";
   hiddenInput.setAttribute("maxlength", currentPassage.length);
   exerciseArea.style.setProperty("--progress", "0%");
+  exerciseArea.style.setProperty("--target-pos", "0%");
 
   textDisplay.innerHTML = Array.from(currentPassage)
     .map((ch, i) => {
@@ -187,6 +190,14 @@ hiddenInput.addEventListener("input", function () {
 
   exerciseArea.style.setProperty("--progress", (typed.length / currentPassage.length * 100) + "%");
 
+  // move the target pace marker
+  if (targetWpm > 0 && started) {
+    const elapsed  = (Date.now() - startTime) / 1000 / 60; // minutes
+    const paceChars = targetWpm * 5 * elapsed;
+    const pct = Math.min(paceChars / currentPassage.length * 100, 100);
+    exerciseArea.style.setProperty("--target-pos", pct + "%");
+  }
+
   if (typed.length >= currentPassage.length) finish(typed);
 });
 
@@ -202,11 +213,22 @@ function updateLiveStats() {
     ? `${mins}:${String(secs).padStart(2, "0")}<span>min</span>`
     : `${secs}<span>s</span>`;
 
-  // WPM — suppress for first 3 s; go green when target is hit
+  // WPM — suppress for first 3 s; show gap to target or ✓ when hit
   if (minutes >= 0.05) {
     const wpm = Math.round((hiddenInput.value.length / 5) / minutes);
-    liveWpm.innerHTML = `${wpm}<span>wpm</span>`;
-    liveWpm.classList.toggle("on-target", targetWpm > 0 && wpm >= targetWpm);
+    if (targetWpm > 0) {
+      const gap = targetWpm - wpm;
+      if (gap <= 0) {
+        liveWpm.innerHTML = `${wpm}<span>wpm ✓</span>`;
+        liveWpm.classList.add("on-target");
+      } else {
+        liveWpm.innerHTML = `${wpm}<span>wpm</span><span class="wpm-gap">-${gap}</span>`;
+        liveWpm.classList.remove("on-target");
+      }
+    } else {
+      liveWpm.innerHTML = `${wpm}<span>wpm</span>`;
+      liveWpm.classList.remove("on-target");
+    }
   }
 
   // Accuracy
