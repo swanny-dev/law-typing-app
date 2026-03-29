@@ -69,10 +69,7 @@ async def post_progress(result: SessionResult, auth=Depends(check_auth)):
     old_bests = get_bests()
     save_session(result.wpm, result.accuracy, result.topic, result.mistakes, result.date)
     if result.key_errors:
-        try:
-            save_key_errors(result.key_errors)
-        except Exception:
-            pass
+        save_key_errors(result.key_errors)
     return {
         "status": "ok",
         "new_best_wpm": result.wpm > (old_bests["best_wpm"] or 0),

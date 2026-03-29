@@ -44,11 +44,8 @@ def save_session(wpm: float, accuracy: float, topic: str, mistakes: int, date: s
 def save_key_errors(errors: dict):
     conn = sqlite3.connect(DB_PATH)
     for key, count in errors.items():
-        conn.execute(
-            """INSERT INTO key_errors (key, count) VALUES (?, ?)
-               ON CONFLICT(key) DO UPDATE SET count = count + excluded.count""",
-            (key, count),
-        )
+        conn.execute("INSERT OR IGNORE INTO key_errors (key, count) VALUES (?, 0)", (key,))
+        conn.execute("UPDATE key_errors SET count = count + ? WHERE key = ?", (count, key))
     conn.commit()
     conn.close()
 
