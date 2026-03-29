@@ -277,6 +277,15 @@ function showResults(wpm, accuracy, elapsed, mistakes, newBestWpm, newBestMistak
   document.getElementById("res-bests").innerHTML = badges.join("");
 
   showScreen("results-screen");
+
+  // WPM bounce
+  const wpmEl = document.getElementById("res-wpm");
+  wpmEl.classList.remove("wpm-dance");
+  void wpmEl.offsetWidth; // force reflow so animation restarts
+  wpmEl.classList.add("wpm-dance");
+
+  // fireworks
+  launchFireworks();
 }
 
 // ── Progress ───────────────────────────────────────────────────
@@ -435,4 +444,74 @@ function getSpan(i) {
 
 function encodeChar(ch) {
   return { '"': "&quot;", "'": "&#39;", "&": "&amp;", "<": "&lt;", ">": "&gt;" }[ch] ?? ch;
+}
+
+// ── Fireworks ──────────────────────────────────────────────────
+
+const fwCanvas = document.getElementById("fireworks-canvas");
+const fwCtx    = fwCanvas.getContext("2d");
+let   fwParticles = [];
+let   fwRaf       = null;
+
+const FW_COLOURS = ["#818cf8","#c084fc","#f9a8d4","#facc15","#34d399","#f43f5e","#60a5fa"];
+
+function launchFireworks() {
+  fwCanvas.width  = window.innerWidth;
+  fwCanvas.height = window.innerHeight;
+  fwParticles = [];
+
+  // 6 bursts scattered across the screen
+  const bursts = [
+    { x: 0.2, y: 0.25 }, { x: 0.5, y: 0.15 }, { x: 0.8, y: 0.25 },
+    { x: 0.3, y: 0.55 }, { x: 0.7, y: 0.5  }, { x: 0.5, y: 0.65 },
+  ];
+
+  for (const b of bursts) {
+    const cx    = b.x * fwCanvas.width;
+    const cy    = b.y * fwCanvas.height;
+    const color = FW_COLOURS[Math.floor(Math.random() * FW_COLOURS.length)];
+    for (let i = 0; i < 60; i++) {
+      const angle = (Math.PI * 2 / 60) * i;
+      const speed = 2 + Math.random() * 5;
+      fwParticles.push({
+        x: cx, y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1,
+        radius: 2 + Math.random() * 2,
+        color,
+        gravity: 0.08 + Math.random() * 0.04,
+        decay: 0.013 + Math.random() * 0.007,
+      });
+    }
+  }
+
+  if (fwRaf) cancelAnimationFrame(fwRaf);
+  animateFireworks();
+}
+
+function animateFireworks() {
+  fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+
+  for (const p of fwParticles) {
+    p.x     += p.vx;
+    p.y     += p.vy;
+    p.vy    += p.gravity;
+    p.vx    *= 0.98;
+    p.alpha -= p.decay;
+
+    fwCtx.globalAlpha = Math.max(p.alpha, 0);
+    fwCtx.beginPath();
+    fwCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+    fwCtx.fillStyle = p.color;
+    fwCtx.fill();
+  }
+
+  fwParticles = fwParticles.filter(p => p.alpha > 0);
+
+  if (fwParticles.length) {
+    fwRaf = requestAnimationFrame(animateFireworks);
+  } else {
+    fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+  }
 }
