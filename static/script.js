@@ -18,6 +18,7 @@ let prevTypedLen     = 0;
 let sessionKeyErrors = {};
 let targetWpm        = 0;
 let blinkTimeout     = null;
+let currentUser      = localStorage.getItem("lex_username") || "";
 
 // ── Caret ──────────────────────────────────────────────────────
 
@@ -66,7 +67,11 @@ const liveTimer    = document.getElementById("live-timer");
 
 // ── Boot ───────────────────────────────────────────────────────
 
-loadNewExercise();
+if (!currentUser) {
+  document.getElementById("name-modal").style.display = "flex";
+} else {
+  loadNewExercise();
+}
 
 (async () => {
   try {
@@ -74,6 +79,21 @@ loadNewExercise();
     if (available) document.getElementById("btn-docs").style.display = "";
   } catch {}
 })();
+
+// ── Name prompt ────────────────────────────────────────────────
+
+function submitName() {
+  const name = document.getElementById("name-input").value.trim();
+  if (!name) return;
+  currentUser = name;
+  localStorage.setItem("lex_username", name);
+  document.getElementById("name-modal").style.display = "none";
+  loadNewExercise();
+}
+
+document.getElementById("name-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") submitName();
+});
 
 // ── Toggle handlers ────────────────────────────────────────────
 
@@ -318,6 +338,7 @@ async function finish(typed) {
         topic: currentTopic,
         mistakes: mistakeCount,
         key_errors: sessionKeyErrors,
+        user: currentUser,
         date: new Date().toLocaleString("en-NZ", {
           timeZone: "Pacific/Auckland",
           day: "2-digit", month: "short", year: "numeric",
@@ -376,10 +397,11 @@ async function showProgress() {
 
     content.innerHTML = `
       <table class="progress-table">
-        <thead><tr><th>date</th><th>wpm</th><th>accuracy</th><th>mistakes</th><th>topic</th></tr></thead>
+        <thead><tr><th>user</th><th>date</th><th>wpm</th><th>accuracy</th><th>mistakes</th><th>topic</th></tr></thead>
         <tbody>
           ${data.map(r => `
             <tr>
+              <td class="user-cell${r.user === currentUser ? " user-cell--me" : ""}">${r.user || "—"}</td>
               <td>${r.date}</td>
               <td class="wpm-cell">${r.wpm}</td>
               <td class="acc-cell">${r.accuracy}%</td>

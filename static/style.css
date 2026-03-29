@@ -509,6 +509,16 @@ body {
   font-weight: 600;
 }
 
+.user-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--border2);
+}
+
+.user-cell--me {
+  color: #818cf8;
+}
+
 .no-results {
   text-align: center;
   color: var(--border);
@@ -693,6 +703,19 @@ body {
   line-height: 1.7;
 }
 .modal-textarea:focus { border-color: rgba(250,204,21,.3); }
+
+.modal-input {
+  width: 100%;
+  background: var(--surf2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--bright);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  outline: none;
+}
+.modal-input:focus { border-color: rgba(250,204,21,.3); }
 
 .modal-actions {
   display: flex;
