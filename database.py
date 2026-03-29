@@ -78,6 +78,15 @@ def get_key_errors() -> dict:
     return {r[0]: r[1] for r in rows}
 
 
+def get_admin_sessions() -> list:
+    conn = sqlite3.connect(DB_PATH)
+    rows = conn.execute(
+        "SELECT id, date, wpm, accuracy, topic, mistakes, ip FROM sessions ORDER BY id DESC LIMIT 100"
+    ).fetchall()
+    conn.close()
+    return [{"id": r[0], "date": r[1], "wpm": r[2], "accuracy": r[3], "topic": r[4], "mistakes": r[5], "ip": r[6]} for r in rows]
+
+
 def get_bests() -> dict:
     conn = sqlite3.connect(DB_PATH)
     row = conn.execute("SELECT MAX(wpm), MIN(mistakes) FROM sessions").fetchone()

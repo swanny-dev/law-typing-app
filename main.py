@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from claude_service import generate_exercise, docs_available
-from database import delete_session, get_bests, get_key_errors, get_sessions, init_db, save_key_errors, save_session
+from database import delete_session, get_admin_sessions, get_bests, get_key_errors, get_sessions, init_db, save_key_errors, save_session
 
 security = HTTPBasic(auto_error=False)
 
@@ -104,16 +104,11 @@ async def get_heatmap(auth=Depends(check_auth)):
 
 
 @app.get("/api/admin/sessions")
-async def admin_sessions(key: str = "", auth=Depends(check_auth)):
+async def admin_sessions(key: str = ""):
     admin_key = os.getenv("ADMIN_KEY")
     if not admin_key or not secrets.compare_digest(key, admin_key):
         raise HTTPException(status_code=403, detail="Forbidden")
-    conn = __import__("sqlite3").connect(__import__("os").getenv("DB_PATH", "progress.db"))
-    rows = conn.execute(
-        "SELECT id, date, wpm, accuracy, topic, mistakes, ip FROM sessions ORDER BY id DESC LIMIT 100"
-    ).fetchall()
-    conn.close()
-    return [{"id": r[0], "date": r[1], "wpm": r[2], "accuracy": r[3], "topic": r[4], "mistakes": r[5], "ip": r[6]} for r in rows]
+    return get_admin_sessions()
 
 
 if __name__ == "__main__":
